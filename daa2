@@ -1,0 +1,90 @@
+import heapq
+from collections import defaultdict
+
+class Node:
+    def __init__(self, char, freq):
+        self.char = char
+        self.freq = freq
+        self.left = None
+        self.right = None
+
+    def __lt__(self, other):
+        return self.freq < other.freq
+
+def build_huffman_tree(freq_map):
+    # Create a priority queue (min-heap) to store nodes
+    min_heap = [Node(char, freq) for char, freq in freq_map.items()]
+    heapq.heapify(min_heap)
+
+    while len(min_heap) > 1:
+        # Get the two nodes with the lowest frequencies
+        left = heapq.heappop(min_heap)
+        right = heapq.heappop(min_heap)
+
+        # Create a new node with the sum of their frequencies
+        new_node = Node(None, left.freq + right.freq)
+        new_node.left = left
+        new_node.right = right
+
+        # Add the new node back to the priority queue
+        heapq.heappush(min_heap, new_node)
+
+    return min_heap[0]
+
+def build_huffman_codes(root, prefix, huffman_codes):
+    if root is not None:
+        if root.char is not None:
+            huffman_codes[root.char] = prefix
+        build_huffman_codes(root.left, prefix + '0', huffman_codes)
+        build_huffman_codes(root.right, prefix + '1', huffman_codes)
+
+def huffman_encoding(text):
+    # Count character frequencies
+    freq_map = defaultdict(int)
+    for char in text:
+        freq_map[char] += 1
+
+    # Build the Huffman tree
+    root = build_huffman_tree(freq_map)
+
+    # Build Huffman codes
+    huffman_codes = {}
+    build_huffman_codes(root, '', huffman_codes)
+
+    # Encode the input text
+    encoded_text = ''.join(huffman_codes[char] for char in text)
+
+    return encoded_text, root
+
+def huffman_decoding(encoded_text, root):
+    decoded_text = []
+    current_node = root
+
+    for bit in encoded_text:
+        if bit == '0':
+            current_node = current_node.left
+        else:
+            current_node = current_node.right
+
+        if current_node.char is not None:
+            decoded_text.append(current_node.char)
+            current_node = root
+
+    return ''.join(decoded_text)
+
+if __name__ == "__main__":
+    text = "this is an example for huffman encoding"
+    
+    # Encode the text
+    encoded_text, huffman_tree = huffman_encoding(text)
+    print("Encoded text:", encoded_text)
+    
+    # Decode the encoded text
+    decoded_text = huffman_decoding(encoded_text, huffman_tree)
+    print("Decoded text:", decoded_text)
+
+    if text == decoded_text:
+        print("Decoding successful")
+    else:
+        print("Decoding failed")
+
